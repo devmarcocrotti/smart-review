@@ -1,0 +1,50 @@
+services:
+  frontend:
+    image: node:latest
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    command: npm run dev -- --host
+    ports:
+      - 5174:5173
+    networks:
+      - smart-review
+    depends_on:
+      - ollama
+  backend:
+    image: golang:latest
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    command: go run .
+    ports:
+      - 8081:8080
+    networks:
+      - smart-review
+    depends_on:
+      - ollama
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    entrypoint:
+      [
+        "/bin/bash",
+        "-c",
+        "ollama serve & sleep 5 && ollama pull llama3.2 && wait",
+      ]
+    environment:
+      - OLLAMA_KEEP_ALIVE="24h"
+    volumes:
+      - ollama-storage:/root/.ollama
+    ports:
+      - 11434:11434
+    networks:
+      - smart-review
+networks:
+  smart-review:
+    name: smart-review
+    driver: bridge
+volumes:
+  ollama-storage:
