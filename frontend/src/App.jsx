@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { SparklesIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  SparklesIcon,
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/24/outline";
 
 const Review = ({ score }) => {
   const stars = [];
@@ -27,6 +32,7 @@ function App() {
   const [summarize, setSummarize] = useState(null);
   const [replies, setReplies] = useState([]);
   const [isLoadingReply, setIsLoadingReply] = useState([]);
+  const [opened, setOpened] = useState([]);
 
   const handleSummarize = () => {
     setIsLoading(true);
@@ -57,6 +63,7 @@ function App() {
         const newReply = [...replies];
         newReply[index] = res;
         setReplies(newReply);
+        toggleReply(index);
       })
       .catch(() => {
         loadingReply[index] = false;
@@ -65,7 +72,6 @@ function App() {
         setReplies((prev) => [...prev]);
       });
   };
-  console.log(replies, "_debug");
   useEffect(() => {
     setIsLoading(true);
     fetch("http://localhost:8081/list")
@@ -79,6 +85,11 @@ function App() {
         setReviews([]);
       });
   }, []);
+  const toggleReply = (index) => {
+    const open = [...opened];
+    open[index] = !open[index];
+    setOpened(open);
+  };
 
   return (
     <section className="mx-auto container p-6 flex flex-col gap-12">
@@ -93,23 +104,44 @@ function App() {
               <Review score={review?.score} />
               <p>{review?.text}</p>
               {replies?.[index] && (
-                <div className="italic text-sm">{replies?.[index]?.data}</div>
+                <>
+                  <div
+                    className="w-fit flex flex-row gap-1 items-center text-fuchsia-400 cursor-pointer"
+                    onClick={() => toggleReply(index)}
+                  >
+                    <SparklesIcon className="size-4" />
+                    <span className="text-sm">Risposta generata</span>
+                    {!opened[index] ? (
+                      <ChevronDownIcon className="size-4" />
+                    ) : (
+                      <ChevronUpIcon className="size-4" />
+                    )}
+                  </div>
+                  {opened[index] && (
+                    <div className="italic text-sm">
+                      {replies?.[index]?.data}
+                    </div>
+                  )}
+                </>
               )}
             </div>
-            <div className="flex flex-row gap-3 items-center">
-              {!replies?.[index] && (
-                <button
-                  className="w-fit flex flex-row gap-1 items-center cursor-pointer hover:text-fuchsia-400"
-                  onClick={() => handleReply(index)}
-                >
-                  <SparklesIcon className="size-4" />
-                  <span className="text-sm">Genera risposta</span>
-                </button>
-              )}
-              {isLoadingReply[index] && (
-                <ArrowPathIcon className="size-4 animate-spin" />
-              )}
-            </div>
+
+            {(!replies?.[index] || isLoadingReply[index]) && (
+              <div className="flex flex-row gap-3 items-center">
+                {!replies?.[index] && (
+                  <button
+                    className="w-fit flex flex-row gap-1 items-center cursor-pointer hover:text-fuchsia-400"
+                    onClick={() => handleReply(index)}
+                  >
+                    <SparklesIcon className="size-4" />
+                    <span className="text-sm">Genera risposta</span>
+                  </button>
+                )}
+                {isLoadingReply[index] && (
+                  <ArrowPathIcon className="size-4 animate-spin" />
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -127,7 +159,15 @@ function App() {
           )}
           {isLoading && <ArrowPathIcon className="size-4 animate-spin" />}
         </div>
-        {summarize && <div className="font-semibold">{summarize?.data}</div>}
+        {summarize && (
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-row gap-1 items-center text-fuchsia-400">
+              <SparklesIcon className="size-4" />
+              <span className="text-sm">Report generato</span>
+            </div>
+            <div className="font-semibold">{summarize?.data}</div>
+          </div>
+        )}
       </div>
     </section>
   );
